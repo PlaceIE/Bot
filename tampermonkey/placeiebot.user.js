@@ -1,22 +1,23 @@
 // ==UserScript==
-// @name         PlaceNL Bot (Czech Edition)
-// @namespace    https://github.com/PlaceCZ/Bot
+// @name         PlaceNL Bot (Irelnad Edition)
+// @namespace    https://github.com/PlaceIE/Bot
 // @version      12
-// @description  Bot pro PlaceNL, předelán do češtiny
-// @author       NoahvdAa, GravelCZ, MartinNemi03
+// @description  Bot for PlaceNL, forked from PlaceCZ, made for PlaceIE
+// @author       NoahvdAa, GravelCZ, MartinNemi03, Wavelink
 // @match        https://www.reddit.com/r/place/*
 // @match        https://new.reddit.com/r/place/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=reddit.com
 // @require	     https://cdn.jsdelivr.net/npm/toastify-js
 // @resource     TOASTIFY_CSS https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css
-// @updateURL    https://github.com/PlaceCZ/Bot/raw/master/placenlbot.user.js
-// @downloadURL  https://github.com/PlaceCZ/Bot/raw/master/placenlbot.user.js
+// @updateURL    https://github.com/PlaceIE/Bot/raw/master/placeiebot.user.js
+// @downloadURL  https://github.com/PlaceIE/Bot/raw/master/placeiebot.user.js
 // @grant        GM_getResourceText
 // @grant        GM_addStyle
 // ==/UserScript==
 
 // Sorry voor de rommelige code, haast en clean gaatn iet altijd samen ;)
 // Překlad: Omlouváme se za chaotický kód, spěch a čistota nejdou vždy dohromady. ;)
+// Translation: We're sorry for the chaotic code, speed and tidyness don't always got together
 
 var socket;
 var hasOrders = false;
@@ -98,16 +99,16 @@ function connectSocket() {
 
     const errorTimeout = setTimeout(() => {
         Toastify({
-            text: 'Chyba při pokusu o připojení na PlaceCZ server',
+            text: 'Error while connecting to the PlaceIE server',
             duration: 10000
         }).showToast();
-        console.error('Chyba při pokusu o připojení na PlaceCZ server')
+        console.error('Error while connecting to the PlaceIE server')
     }, 2000)
 
     socket.onopen = function () {
         clearTimeout(errorTimeout);
         Toastify({
-            text: 'Připojeno na server PlaceCZ',
+            text: 'Connected to the placeIE server',
             duration: 10000
         }).showToast();
         socket.send(JSON.stringify({ type: 'getmap' }));
@@ -124,7 +125,7 @@ function connectSocket() {
         switch (data.type.toLowerCase()) {
             case 'map':
                 Toastify({
-                    text: `Nové rozkazy připraveny, duvod: ${data.reason ? data.reason : 'Připojte se na PlaceCZ'})`,
+                    text: `New orders received, reason: ${data.reason ? data.reason : 'Connect to the PlaceIE server'})`,
                     duration: 10000
                 }).showToast();
                 currentOrderCtx = await getCanvasFromUrl(`https://${BackendAddress}/maps/${data.data}`, currentOrderCanvas);
@@ -137,7 +138,7 @@ function connectSocket() {
 
     socket.onclose = function (e) {
         Toastify({
-            text: `Odpojen od PlaceCZ serveru: ${e.reason}`,
+            text: `Disconnected from the PlaceIE server: ${e.reason}`,
             duration: 10000
         }).showToast();
         console.error('Socketfout: ', e.reason);
@@ -156,9 +157,9 @@ async function attemptPlace() {
         ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas, 0, 0);
         ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1000, 0)
     } catch (e) {
-        console.warn('Chyba při načítání mapy: ', e);
+        console.warn('Error while loading map: ', e);
         Toastify({
-            text: 'Chyba při načítání mapy, zkuste znovu za 10 sekund',
+            text: 'Error while loading map, try again in 10 seconds',
             duration: 10000
         }).showToast();
         setTimeout(attemptPlace, 10000);
@@ -179,7 +180,7 @@ async function attemptPlace() {
         const x = i % 2000;
         const y = Math.floor(i / 2000);
         Toastify({
-            text: `Pokus o umístění pixelu na ${x}, ${y}...`,
+            text: `Trying to place pixel at ${x}, ${y}...`,
             duration: 10000
         }).showToast();
 
@@ -192,7 +193,7 @@ async function attemptPlace() {
                 const nextPixelDate = new Date(nextPixel);
                 const delay = nextPixelDate.getTime() - Date.now();
                 Toastify({
-                    text: `Příliš brzo umístěný pixel. Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
+                    text: `Pixel placed to early. Next pixel will be placed at ${nextPixelDate.toLocaleTimeString()}.`,
                     duration: delay
                 }).showToast();
                 setTimeout(attemptPlace, delay);
@@ -201,15 +202,15 @@ async function attemptPlace() {
                 const nextPixelDate = new Date(nextPixel);
                 const delay = nextPixelDate.getTime() - Date.now();
                 Toastify({
-                    text: `Pixel položen na ${x}, ${y}! Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
+                    text: `Pixel placed at ${x}, ${y}! Next pixel will be placed at ${nextPixelDate.toLocaleTimeString()}.`,
                     duration: delay
                 }).showToast();
                 setTimeout(attemptPlace, delay);
             }
         } catch (e) {
-            console.warn('Chyba pří analýze', e);
+            console.warn('Error while analyzing', e);
             Toastify({
-                text: `Chyba pří analýze: ${e}.`,
+                text: `Error while analyzing: ${e}.`,
                 duration: 10000
             }).showToast();
             setTimeout(attemptPlace, 10000);
@@ -219,7 +220,7 @@ async function attemptPlace() {
     }
 
     Toastify({
-        text: `Všechny pixely jsou již na správném místě! Zkouším to znovu za 30 sekund...`,
+        text: `All pixels are correct. Retrying in 30 seconds...`,
         duration: 30000
     }).showToast();
     setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.

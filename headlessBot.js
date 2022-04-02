@@ -5,7 +5,7 @@ import WebSocket from 'ws';
 const args = process.argv.slice(2);
 
 if (args.length != 1) {
-    console.error("Chybí access token.")
+    console.error("Missing access token.")
     process.exit(1);
 }
 
@@ -60,12 +60,12 @@ const COLOR_MAPPINGS = {
 })();
 
 function connectSocket() {
-    console.log('Připojiju se na PlaceCZ server...')
+    console.log('Connecting to PlaceIE server')
 
-    socket = new WebSocket('wss://placecz.martinnemi.me/api/ws');
+    socket = new WebSocket('wss:///api/ws'); //todo: Replace the URL
 
     socket.onopen = function () {
-        console.log('Připojeno na PlaceCZ server!')
+        console.log('Connected to the PlaceIE Server')
         socket.send(JSON.stringify({ type: 'getmap' }));
     };
 
@@ -79,8 +79,8 @@ function connectSocket() {
 
         switch (data.type.toLowerCase()) {
             case 'map':
-                console.log(`Nové příkazy načteny (důvod: ${data.reason ? data.reason : 'Připojeno k serveru'})`)
-                currentOrders = await getMapFromUrl(`https://placecz.martinnemi.me/maps/${data.data}`);
+                console.log(`New orders loaded (Reason: ${data.reason ? data.reason : 'Connected to the server'})`)
+                currentOrders = await getMapFromUrl(`https:///maps/${data.data}`); //todo: Replace the URL
                 hasOrders = true;
                 break;
             default:
@@ -89,8 +89,8 @@ function connectSocket() {
     };
 
     socket.onclose = function (e) {
-        console.warn(`Server PlaceCZ se odpojil, důvod: ${e.reason}`)
-        console.error('Socket se odpojil: ', e.reason);
+        console.warn(`Disconnected from the PlaceIE server, reason: ${e.reason}`)
+        console.error('Socket disconnected: ', e.reason);
         socket.close();
         setTimeout(connectSocket, 1000);
     };
@@ -106,7 +106,7 @@ async function attemptPlace() {
         currentMap = await getMapFromUrl(getCurrentImageUrl('0'));
         currentMap = await getMapFromUrl(getCurrentImageUrl('1'));
     } catch (e) {
-        console.warn('Chyba při načítání momentálního canvasu: ', e);
+        console.warn('Error while roading canvas: ', e);
         setTimeout(attemptPlace, 15000);
         return;
     }
@@ -133,24 +133,24 @@ async function attemptPlace() {
                 const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
                 const nextPixelDate = new Date(nextPixel);
                 const delay = nextPixelDate.getTime() - Date.now();
-                console.log(`Zkusili jsme položit pixel moc brzo! Další pixel bude umístěn v ${nextPixelDate.toLocaleTimeString()}.`)
+                console.log(`Pixel placed to early! Next pixel will be placed at ${nextPixelDate.toLocaleTimeString()}.`)
                 setTimeout(attemptPlace, delay);
             } else {
                 const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
                 const nextPixelDate = new Date(nextPixel);
                 const delay = nextPixelDate.getTime() - Date.now();
-                console.log(`Pixel položen ${x}, ${y}! Další pixel bude umístěn v  ${nextPixelDate.toLocaleTimeString()}.`)
+                console.log(`Pixel placed at ${x}, ${y}! Next pixel will be placed at ${nextPixelDate.toLocaleTimeString()}.`)
                 setTimeout(attemptPlace, delay);
             }
         } catch (e) {
-            console.warn('Zkontrolujte chybu odpovědi', e);
+            console.warn('Check the error of the answer', e);
             setTimeout(attemptPlace, 10000);
         }
 
         return;
     }
 
-    console.log(`Všechny pixely jsou na správném místě! Zkusíme to znovu za 30 sekund.`)
+    console.log(`All pixels are correct, checking again in 30 seconds`)
     setTimeout(attemptPlace, 30000);
 }
 
